@@ -48,7 +48,6 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
   };
 
   const navItems = [
-    { id: 'search', label: 'Tra cß╗⌐u ICD', icon: Search },
     { id: 'tt06', label: 'Tra cß╗⌐u ICD TT06', icon: FileText },
     { id: 'tt25', label: 'Tra c\u1ee9u ICD TT25', icon: FileText },
     { id: 'yhct', label: 'Tra cß╗⌐u YHCT', icon: Stethoscope },
