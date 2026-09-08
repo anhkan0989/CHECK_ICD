@@ -1,5 +1,6 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
+import { SearchPage } from './pages/SearchPage';
 import { SearchTT25Page } from './pages/SearchTT25Page';
 import { SearchICDTT06Page } from './pages/SearchICDTT06Page';
 import { SearchYHCTPage } from './pages/SearchYHCTPage';
@@ -57,6 +58,7 @@ export default function App() {
           {updateMessage}
         </div>
       )}
+      {currentTab === 'search' && <SearchPage />}
       {currentTab === 'tt06' && <SearchICDTT06Page />}
       {currentTab === 'tt25' && <SearchTT25Page />}
       {currentTab === 'yhct' && <SearchYHCTPage />}

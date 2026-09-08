@@ -784,6 +784,10 @@ export class ICDDatabase extends Dexie {
     }
   }
 
+  async updateRecord(id: number, data: Partial<ICDRecord>) {
+    await this.icds.update(id, data);
+  }
+
   async searchTT25Paged(query: string, page: number, pageSize: number) {
     const norm = query.trim().toLowerCase();
     let all: TT25Record[];

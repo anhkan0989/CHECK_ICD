@@ -1,4 +1,4 @@
-﻿import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Search, Upload, History, Bot, Menu, X, Activity, Database, Stethoscope, Building2, Syringe, Settings, Pill, FileText } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -48,8 +48,9 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
   };
 
   const navItems = [
+    { id: 'search', label: 'Tra cứu ICD', icon: Search },
     { id: 'tt06', label: 'Tra cß╗⌐u ICD TT06', icon: FileText },
-    { id: 'tt25', label: 'Tra c\u1ee9u ICD TT25', icon: FileText },
+    { id: 'tt25', label: 'Tra cứu ICD TT25', icon: FileText },
     { id: 'yhct', label: 'Tra cß╗⌐u YHCT', icon: Stethoscope },
     { id: 'facility', label: 'Tra cß╗⌐u CSKCB', icon: Building2 },
     { id: 'dvkt', label: 'Tra cß╗⌐u DVKT Tß╗òng hß╗úp', icon: Activity },
