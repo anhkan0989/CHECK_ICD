@@ -815,8 +815,10 @@ export class ICDDatabase extends Dexie {
   async clearTT25Records() {
     await this.tt25records.clear();
   }
+}
 
 export const db = new ICDDatabase();
 
 // Removed sample data populate event to keep the database empty for fresh imports
+
 
