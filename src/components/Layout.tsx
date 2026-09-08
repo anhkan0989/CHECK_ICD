@@ -80,7 +80,7 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-indigo-600 font-bold text-xl">
               <Activity className="w-6 h-6" />
-              <span>ICD Engine</span>
+              <span>CHECK-ICD-ANHIT</span>
             </div>
             <button className="md:hidden text-slate-500" onClick={() => setIsMobileMenuOpen(false)}>
               <X className="w-5 h-5" />
@@ -169,7 +169,7 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
           <button onClick={() => setIsMobileMenuOpen(true)} className="text-slate-600">
             <Menu className="w-6 h-6" />
           </button>
-          <div className="font-bold text-lg text-indigo-600">ICD Engine</div>
+          <div className="font-bold text-lg text-indigo-600">CHECK-ICD-ANHIT</div>
         </header>
         
         <div className="flex-1 overflow-auto p-4 md:p-8 relative z-10">
@@ -181,4 +181,5 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
     </div>
   );
 }
+
 
