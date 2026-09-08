@@ -1,4 +1,4 @@
-﻿import Dexie, { Table } from 'dexie';
+import Dexie, { Table } from 'dexie';
 import { normalizeForSearch } from '../utils/stringUtils';
 
 export interface ICDRecord {
@@ -783,7 +783,6 @@ export class ICDDatabase extends Dexie {
         console.error('Lß╗ùi khi x├│a tr├¬n Supabase:', e);
     }
   }
-}
 
   async searchTT25Paged(query: string, page: number, pageSize: number) {
     const norm = query.trim().toLowerCase();

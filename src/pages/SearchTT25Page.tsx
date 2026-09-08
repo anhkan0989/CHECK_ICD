@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, FileText, Trash2, ChevronLeft, ChevronRight, AlertCircle, Upload } from 'lucide-react';
 import { db, TT25Record } from '../db/database';
 import { cn } from '../components/Layout';
