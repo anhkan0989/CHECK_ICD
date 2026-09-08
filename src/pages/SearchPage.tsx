@@ -96,7 +96,7 @@ export function SearchPage() {
     <div className="h-full flex flex-col gap-4">
       {deleteRecord && (
         <ConfirmDialog
-          title="Xóa bản ghi TT25/TT06"
+          title="Xóa bản ghi TT25"
           message={`Xóa nhóm bệnh "${deleteRecord.name}"? Hành động này không thể hoàn tác.`}
           confirmLabel="Xóa"
           onConfirm={handleDeleteConfirm}
@@ -119,7 +119,7 @@ export function SearchPage() {
             />
           </div>
           <p className="text-xs text-slate-500 mt-2 px-1">
-            Danh sách bệnh dài ngày (TT25/TT06). Nhấn vào mã ICD để xem tên bệnh đối chiếu từ CSDL.
+            Danh sách bệnh dài ngày (TT25). Nhấn vào mã ICD để xem tên bệnh đối chiếu từ CSDL.
           </p>
         </div>
 
@@ -217,7 +217,7 @@ export function SearchPage() {
             <div className="p-12 text-center text-slate-400 flex flex-col items-center">
               <FileText className="w-12 h-12 mb-4 opacity-20" />
               <p className="font-medium">
-                {query ? `Không tìm thấy kết quả cho "${query}"` : 'Chưa có dữ liệu TT25/TT06'}
+                {query ? `Không tìm thấy kết quả cho "${query}"` : 'Chưa có dữ liệu TT25'}
               </p>
               <p className="text-sm mt-1">Vào tab "Cập nhật ICD" để import file TT25</p>
             </div>

@@ -23,7 +23,7 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
   const { isAdmin, login, logout } = useAdmin();
 
   const navItems = [
-    { id: 'search', label: 'Tra cứu ICD TT06', icon: Search },
+    { id: 'search', label: 'Tra cứu ICD TT25', icon: Search },
     { id: 'import', label: 'Cập nhật ICD', icon: Upload },
     { id: 'history', label: 'Lịch sử', icon: History },
     { id: 'ai', label: 'AI Suggest', icon: Bot },
