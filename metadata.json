@@ -1,0 +1,5 @@
+{
+  "name": "ICD Engine",
+  "description": "Hệ thống chuẩn hóa và tra cứu mã bệnh ICD-10 theo chuẩn Bộ Y tế Việt Nam, hỗ trợ import dữ liệu và gợi ý bằng AI.",
+  "requestFramePermissions": []
+}
