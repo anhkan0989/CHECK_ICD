@@ -1,0 +1,270 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Search, FileText, Trash2, ChevronLeft, ChevronRight, AlertCircle, Upload } from 'lucide-react';
+import { db, TT25Record } from '../db/database';
+import { cn } from '../components/Layout';
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+
+interface PaginationProps {
+  page: number;
+  totalPages: number;
+  total: number;
+  pageSize: number;
+  onPageChange: (p: number) => void;
+}
+
+function Pagination({ page, totalPages, total, pageSize, onPageChange }: PaginationProps) {
+  if (totalPages <= 1) return null;
+  const from = (page - 1) * pageSize + 1;
+  const to = Math.min(page * pageSize, total);
+  return (
+    <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 bg-slate-50/50 flex-shrink-0">
+      <p className="text-xs text-slate-500">
+        {from}–{to} / <span className="font-semibold">{total}</span> bản ghi
+      </p>
+      <div className="flex items-center gap-1">
+        <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
+          className="p-1.5 rounded-lg hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <span className="px-3 py-1 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg">
+          {page} / {totalPages}
+        </span>
+        <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
+          className="p-1.5 rounded-lg hover:bg-slate-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Import TT25 ─────────────────────────────────────────────────────────────
+
+function ImportTT25({ onImported }: { onImported: () => void }) {
+  const [importing, setImporting] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    setMsg('Đang đọc file...');
+    try {
+      const text = await file.text();
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const records: TT25Record[] = [];
+
+      for (const line of lines.slice(1)) { // bỏ dòng header
+        const cols = line.split('\t');
+        if (cols.length < 2) continue;
+        const name = cols[0]?.trim() || '';
+        const codesRaw = cols[1]?.trim() || '';
+        if (!name) continue;
+
+        const codes = codesRaw;
+        // Resolve names from ICD database
+        const codeList = codesRaw.split(';').map(c => c.trim()).filter(Boolean);
+        const resolved: { code: string; nameVN: string }[] = [];
+        for (const code of codeList) {
+          const icd = await db.icds.where('code').equalsIgnoreCase(code).first();
+          resolved.push({ code, nameVN: icd?.nameVN || '' });
+        }
+        records.push({ name, codes, resolvedNames: JSON.stringify(resolved) });
+      }
+
+      await db.clearTT25Records();
+      await db.addTT25Records(records);
+      setMsg(`✅ Đã import ${records.length} bản ghi TT25!`);
+      onImported();
+    } catch (err) {
+      setMsg('❌ Lỗi đọc file: ' + String(err));
+    } finally {
+      setImporting(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
+      <label className={cn(
+        "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors",
+        importing ? "bg-slate-200 text-slate-400" : "bg-indigo-600 text-white hover:bg-indigo-700"
+      )}>
+        <Upload className="w-4 h-4" />
+        {importing ? 'Đang import...' : 'Import file TT25 (.txt/.tsv)'}
+        <input type="file" accept=".txt,.tsv,.csv" onChange={handleFile} disabled={importing} className="hidden" />
+      </label>
+      {msg && <p className="text-sm text-slate-700">{msg}</p>}
+      <p className="text-xs text-slate-500 ml-auto">Cột 1: Tên nhóm bệnh, Cột 2: Các mã ICD (cách nhau dấu ;)</p>
+    </div>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+export function SearchTT25Page() {
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [results, setResults] = useState<TT25Record[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const PAGE_SIZE = 50;
+
+  const doSearch = useCallback(async (q: string, p: number) => {
+    setIsSearching(true);
+    try {
+      const res = await db.searchTT25Paged(q, p, PAGE_SIZE);
+      setResults(res.records);
+      setTotal(res.total);
+      setTotalPages(res.totalPages);
+      setPage(res.page);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setPage(1);
+    const timer = setTimeout(() => doSearch(query, 1), 300);
+    return () => clearTimeout(timer);
+  }, [query, doSearch, refreshKey]);
+
+  const handleDelete = async (rec: TT25Record) => {
+    if (!rec.id) return;
+    if (!window.confirm(`Xóa nhóm bệnh "${rec.name}"?`)) return;
+    await db.deleteTT25Record(rec.id);
+    doSearch(query, page);
+  };
+
+  return (
+    <div className="h-full flex flex-col gap-4">
+      {/* Import bar */}
+      <ImportTT25 onImported={() => setRefreshKey(k => k + 1)} />
+
+      {/* Search + Results */}
+      <div className="flex-1 flex flex-col min-h-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex-shrink-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Tìm theo tên nhóm bệnh hoặc mã ICD (VD: A06, viêm gan)..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all bg-white"
+              autoFocus
+            />
+          </div>
+          <p className="text-xs text-slate-500 mt-2 px-1">
+            Danh sách bệnh dài ngày (TT25). Nhấn "Xem mã" để đối chiếu tên bệnh từ CSDL ICD.
+          </p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-3">
+          {isSearching ? (
+            <div className="p-8 text-center text-slate-500">Đang tìm kiếm...</div>
+          ) : results.length > 0 ? (
+            <div className="space-y-2">
+              {results.map((rec) => {
+                const resolved: { code: string; nameVN: string }[] = rec.resolvedNames
+                  ? JSON.parse(rec.resolvedNames)
+                  : rec.codes.split(';').map(c => ({ code: c.trim(), nameVN: '' }));
+                const isExpanded = expandedId === rec.id;
+
+                return (
+                  <div key={rec.id} className="border border-slate-200 rounded-xl overflow-hidden hover:border-indigo-200 transition-colors">
+                    <div className="flex items-start gap-3 p-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-slate-900">{rec.name}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">{resolved.length} mã ICD</p>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => setExpandedId(isExpanded ? null : rec.id!)}
+                          className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
+                        >
+                          {isExpanded ? 'Thu gọn' : 'Xem mã'}
+                        </button>
+                        {isAdmin ? (
+                          <button
+                            onClick={() => handleDelete(rec)}
+                            title="Xóa (Admin)"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button title="Chỉ Admin mới được xóa"
+                            className="p-1.5 text-slate-200 cursor-not-allowed rounded-lg" disabled>
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Chips preview */}
+                    {!isExpanded && (
+                      <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+                        {resolved.slice(0, 8).map(r => (
+                          <span key={r.code}
+                            className="inline-flex items-center px-2 py-0.5 bg-slate-100 text-slate-700 font-mono text-xs rounded-md">
+                            {r.code}
+                          </span>
+                        ))}
+                        {resolved.length > 8 && (
+                          <span className="text-xs text-slate-400 self-center">+{resolved.length - 8} nữa...</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Expanded: full list */}
+                    {isExpanded && (
+                      <div className="border-t border-slate-100 bg-slate-50/50">
+                        <div className="p-3 space-y-1.5 max-h-80 overflow-y-auto">
+                          {resolved.map((r, idx) => (
+                            <div key={idx} className="flex items-start gap-3 p-2.5 bg-white rounded-lg border border-slate-100">
+                              <span className="font-mono text-sm font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded flex-shrink-0">
+                                {r.code}
+                              </span>
+                              {r.nameVN ? (
+                                <span className="text-sm text-slate-700">{r.nameVN}</span>
+                              ) : (
+                                <span className="text-sm text-slate-400 italic flex items-center gap-1">
+                                  <AlertCircle className="w-3.5 h-3.5" />
+                                  Không tìm thấy trong CSDL ICD
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-12 text-center text-slate-400 flex flex-col items-center">
+              <FileText className="w-12 h-12 mb-4 opacity-20" />
+              <p className="font-medium">
+                {query ? `Không tìm thấy kết quả cho "${query}"` : 'Chưa có dữ liệu TT25'}
+              </p>
+              <p className="text-sm mt-1">Import file TT25 ở thanh trên để bắt đầu</p>
+            </div>
+          )}
+        </div>
+
+        <Pagination page={page} totalPages={totalPages} total={total} pageSize={PAGE_SIZE}
+          onPageChange={(p) => doSearch(query, p)} />
+      </div>
+    </div>
+  );
+}

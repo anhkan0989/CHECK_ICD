@@ -1,10 +1,17 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { SearchPage } from './pages/SearchPage';
+import { SearchTT25Page } from './pages/SearchTT25Page';
+import { SearchICDTT06Page } from './pages/SearchICDTT06Page';
+import { SearchYHCTPage } from './pages/SearchYHCTPage';
+import { SearchFacilityPage } from './pages/SearchFacilityPage';
+import { SearchDVKTPage } from './pages/SearchDVKTPage';
+import { SearchThuocPage } from './pages/SearchThuocPage';
 import { ImportPage } from './pages/ImportPage';
 import { HistoryPage } from './pages/HistoryPage';
-import { AIAssistantPage } from './pages/AIAssistantPage';
 import { BackupPage } from './pages/BackupPage';
+import { CLSEnginePage } from './pages/CLSEnginePage';
+import { RuleManagementPage } from './pages/RuleManagementPage';
 import { db } from './db/database';
 
 export default function App() {
@@ -13,20 +20,28 @@ export default function App() {
 
   useEffect(() => {
     const checkUpdates = async () => {
+       // K├¡ch hoß║ít ─æß╗ông bß╗Ö ngß║ºm khi mß╗ƒ app
+       db.syncFromSupabase().then(success => {
+          if (success) {
+             setUpdateMessage('─É├ú ─æß╗ông bß╗Ö dß╗» liß╗çu mß╗¢i nhß║Ñt tß╗½ hß╗ç thß╗æng!');
+             setTimeout(() => setUpdateMessage(''), 3000);
+          }
+       });
+
        // @ts-ignore
        if (window.electronAPI) {
           // @ts-ignore
           const updateData = await window.electronAPI.checkForUpdateFile();
           if (updateData && Array.isArray(updateData)) {
-            setUpdateMessage('Đang nạp file update ICD...');
+            setUpdateMessage('─Éang nß║íp file update ICD...');
             try {
                await db.importData(updateData, 'vUpdateAuto', 'SystemAuto', 'icd_update_file');
                // @ts-ignore
                await window.electronAPI.deleteUpdateFile();
-               setUpdateMessage('Đã nạp file update thành công!');
+               setUpdateMessage('─É├ú nß║íp file update th├ánh c├┤ng!');
                setTimeout(() => setUpdateMessage(''), 3000);
             } catch (err) {
-               setUpdateMessage('Lỗi nạp file update!');
+               setUpdateMessage('Lß╗ùi nß║íp file update!');
                console.error(err);
                setTimeout(() => setUpdateMessage(''), 3000);
             }
@@ -44,10 +59,18 @@ export default function App() {
         </div>
       )}
       {currentTab === 'search' && <SearchPage />}
+      {currentTab === 'tt06' && <SearchICDTT06Page />}
+      {currentTab === 'tt25' && <SearchTT25Page />}
+      {currentTab === 'yhct' && <SearchYHCTPage />}
+      {currentTab === 'facility' && <SearchFacilityPage />}
+      {currentTab === 'dvkt' && <SearchDVKTPage />}
+      {currentTab === 'thuoc' && <SearchThuocPage />}
       {currentTab === 'import' && <ImportPage />}
       {currentTab === 'history' && <HistoryPage />}
-      {currentTab === 'ai' && <AIAssistantPage />}
+      {currentTab === 'cls_engine' && <CLSEnginePage />}
+      {currentTab === 'rule_management' && <RuleManagementPage />}
       {currentTab === 'backup' && <BackupPage />}
     </Layout>
   );
 }
+
