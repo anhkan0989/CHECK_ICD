@@ -282,6 +282,15 @@ export class ICDDatabase extends Dexie {
       .toArray();
   }
 
+  async searchDVKTPaged(query: string, page: number, pageSize: number) {
+    const all = await this.searchDVKT(query, 1000000);
+    const total = all.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    const safeP = Math.min(Math.max(page, 1), totalPages);
+    const records = all.slice((safeP - 1) * pageSize, safeP * pageSize);
+    return { records, total, totalPages, page: safeP };
+  }
+
   async search(query: string, activeFilter: 'all' | 'active' | 'inactive' | 'a2' = 'all', limit: number = 200): Promise<ICDRecord[]> {
     
     const normalizedQuery = query ? normalizeForSearch(query) : '';
@@ -304,6 +313,15 @@ export class ICDDatabase extends Dexie {
       })
       .limit(limit)
       .toArray();
+  }
+
+  async searchPaged(query: string, activeFilter: 'all' | 'active' | 'inactive' | 'a2' = 'all', page: number, pageSize: number) {
+    const all = await this.search(query, activeFilter, 1000000);
+    const total = all.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    const safeP = Math.min(Math.max(page, 1), totalPages);
+    const records = all.slice((safeP - 1) * pageSize, safeP * pageSize);
+    return { records, total, totalPages, page: safeP };
   }
 
   async importData(data: Partial<ICDRecord>[], version: string, importer: string, fileName: string) {
@@ -436,6 +454,15 @@ export class ICDDatabase extends Dexie {
       .toArray();
   }
 
+  async searchICDTT06Paged(query: string, filters: ICDTT06Filters | undefined, page: number, pageSize: number) {
+    const all = await this.searchICDTT06(query, filters, 1000000);
+    const total = all.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    const safeP = Math.min(Math.max(page, 1), totalPages);
+    const records = all.slice((safeP - 1) * pageSize, safeP * pageSize);
+    return { records, total, totalPages, page: safeP };
+  }
+
   async importICDTT06(data: Partial<ICDTT06Record>[], version: string, importer: string, fileName: string) {
     let added = 0;
     let updated = 0;
@@ -504,12 +531,30 @@ export class ICDDatabase extends Dexie {
     }).limit(limit).toArray();
   }
 
+  async searchYHCTPaged(query: string, activeFilter: 'all' | 'active' | 'inactive' | 'a2' = 'all', page: number, pageSize: number) {
+    const all = await this.searchYHCT(query, activeFilter, 1000000);
+    const total = all.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    const safeP = Math.min(Math.max(page, 1), totalPages);
+    const records = all.slice((safeP - 1) * pageSize, safeP * pageSize);
+    return { records, total, totalPages, page: safeP };
+  }
+
   async searchFacilities(query: string, limit: number = 200): Promise<FacilityRecord[]> {
     const normalizedQuery = query ? normalizeForSearch(query) : '';
     const terms = normalizedQuery.split(' ').filter(t => t.length > 0);
     return await this.facilities.filter(record => {
       return terms.every(term => (record.searchString || '').includes(term));
     }).limit(limit).toArray();
+  }
+
+  async searchFacilitiesPaged(query: string, page: number, pageSize: number) {
+    const all = await this.searchFacilities(query, 1000000);
+    const total = all.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    const safeP = Math.min(Math.max(page, 1), totalPages);
+    const records = all.slice((safeP - 1) * pageSize, safeP * pageSize);
+    return { records, total, totalPages, page: safeP };
   }
 
   async importYHCT(data: Partial<YHCTRecord>[], version: string, importer: string, fileName: string) {
@@ -697,6 +742,15 @@ export class ICDDatabase extends Dexie {
       })
       .limit(limit)
       .toArray();
+  }
+
+  async searchThuocQuocGiaPaged(query: string, page: number, pageSize: number) {
+    const all = await this.searchThuocQuocGia(query, 1000000);
+    const total = all.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    const safeP = Math.min(Math.max(page, 1), totalPages);
+    const records = all.slice((safeP - 1) * pageSize, safeP * pageSize);
+    return { records, total, totalPages, page: safeP };
   }
 
   async importThuocQuocGia(data: Partial<ThuocQuocGiaRecord>[], version: string, importer: string, fileName: string) {

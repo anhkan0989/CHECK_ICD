@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Info, CheckCircle2, XCircle, FileText, Activity } from 'lucide-react';
 import { db, ICDRecord } from '../db/database';
 import { cn } from '../components/Layout';
+import { Pagination } from '../components/Pagination';
 
 export function SearchPage() {
   const [query, setQuery] = useState('');
@@ -10,12 +11,24 @@ export function SearchPage() {
   const [selectedICD, setSelectedICD] = useState<ICDRecord | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const PAGE_SIZE = 100;
+
+  // Reset page when query or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [query, activeFilter]);
+
   useEffect(() => {
     const search = async () => {
       setIsSearching(true);
       try {
-        const res = await db.search(query, activeFilter);
-        setResults(res);
+        const res = await db.searchPaged(query, activeFilter, page, PAGE_SIZE);
+        setResults(res.records);
+        setTotalPages(res.totalPages);
+        setTotalRecords(res.total);
       } catch (error) {
         console.error("Search error:", error);
       } finally {
@@ -25,7 +38,7 @@ export function SearchPage() {
 
     const debounceTimer = setTimeout(search, 300);
     return () => clearTimeout(debounceTimer);
-  }, [query, activeFilter]);
+  }, [query, activeFilter, page]);
 
   return (
     <div className="h-full flex flex-col md:flex-row gap-6">
@@ -119,6 +132,7 @@ export function SearchPage() {
             </div>
           )}
         </div>
+        <Pagination page={page} totalPages={totalPages} total={totalRecords} pageSize={PAGE_SIZE} onPageChange={setPage} />
       </div>
 
       {/* Right Panel: Details */}

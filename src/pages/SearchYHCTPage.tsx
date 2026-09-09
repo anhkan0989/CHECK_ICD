@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Info, ShieldPlus, FileText, Stethoscope } from 'lucide-react';
 import { db, YHCTRecord } from '../db/database';
 import { cn } from '../components/Layout';
+import { Pagination } from '../components/Pagination';
 
 export function SearchYHCTPage() {
   const [query, setQuery] = useState('');
@@ -10,12 +11,23 @@ export function SearchYHCTPage() {
   const [selectedICD, setSelectedICD] = useState<any | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const PAGE_SIZE = 100;
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, activeFilter]);
+
   useEffect(() => {
     const search = async () => {
       setIsSearching(true);
       try {
-        const res = await db.searchYHCT(query, activeFilter, 200);
-        setResults(res);
+        const res = await db.searchYHCTPaged(query, activeFilter, page, PAGE_SIZE);
+        setResults(res.records);
+        setTotalPages(res.totalPages);
+        setTotalRecords(res.total);
       } catch (error) {
         console.error("Search error:", error);
       } finally {
@@ -25,7 +37,7 @@ export function SearchYHCTPage() {
 
     const debounceTimer = setTimeout(search, 300);
     return () => clearTimeout(debounceTimer);
-  }, [query, activeFilter]);
+  }, [query, activeFilter, page]);
 
   return (
     <div className="h-full flex flex-col md:flex-row gap-6">
@@ -114,6 +126,7 @@ export function SearchYHCTPage() {
             </div>
           )}
         </div>
+        <Pagination page={page} totalPages={totalPages} total={totalRecords} pageSize={PAGE_SIZE} onPageChange={setPage} />
       </div>
 
       <div className="w-full md:w-96 flex-shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">

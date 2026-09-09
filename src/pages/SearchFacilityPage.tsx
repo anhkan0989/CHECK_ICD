@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Info, MapPin, Building2, Shield, Hash } from 'lucide-react';
 import { db, FacilityRecord } from '../db/database';
 import { cn } from '../components/Layout';
+import { Pagination } from '../components/Pagination';
 
 export function SearchFacilityPage() {
   const [query, setQuery] = useState('');
@@ -9,12 +10,23 @@ export function SearchFacilityPage() {
   const [selectedICD, setSelectedICD] = useState<FacilityRecord | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const PAGE_SIZE = 100;
+
+  useEffect(() => {
+    setPage(1);
+  }, [query]);
+
   useEffect(() => {
     const search = async () => {
       setIsSearching(true);
       try {
-        const res = await db.searchFacilities(query, 200);
-        setResults(res);
+        const res = await db.searchFacilitiesPaged(query, page, PAGE_SIZE);
+        setResults(res.records);
+        setTotalPages(res.totalPages);
+        setTotalRecords(res.total);
       } catch (error) {
         console.error("Search error:", error);
       } finally {
@@ -24,7 +36,7 @@ export function SearchFacilityPage() {
 
     const debounceTimer = setTimeout(search, 300);
     return () => clearTimeout(debounceTimer);
-  }, [query]);
+  }, [query, page]);
 
   return (
     <div className="h-full flex flex-col md:flex-row gap-6">
@@ -84,6 +96,7 @@ export function SearchFacilityPage() {
             </div>
           )}
         </div>
+        <Pagination page={page} totalPages={totalPages} total={totalRecords} pageSize={PAGE_SIZE} onPageChange={setPage} />
       </div>
 
       <div className="w-full md:w-96 flex-shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">

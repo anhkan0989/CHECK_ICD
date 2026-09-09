@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { db, DVKTTongHopRecord } from '../db/database';
 import { Search, Loader2 } from 'lucide-react';
 import { useDebounce } from '../hooks/useDebounce';
+import { Pagination } from '../components/Pagination';
 
 export function SearchDVKTPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,12 +10,23 @@ export function SearchDVKTPage() {
   const [isLoading, setIsLoading] = useState(false);
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const PAGE_SIZE = 100;
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm]);
+
   useEffect(() => {
     const doSearch = async () => {
       setIsLoading(true);
       try {
-        const res = await db.searchDVKT(debouncedSearchTerm, 100);
-        setResults(res);
+        const res = await db.searchDVKTPaged(debouncedSearchTerm, page, PAGE_SIZE);
+        setResults(res.records);
+        setTotalPages(res.totalPages);
+        setTotalRecords(res.total);
       } catch (err) {
         console.error(err);
       } finally {
@@ -23,7 +35,7 @@ export function SearchDVKTPage() {
     };
 
     doSearch();
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, page]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -103,6 +115,7 @@ export function SearchDVKTPage() {
             </div>
           )}
         </div>
+        <Pagination page={page} totalPages={totalPages} total={totalRecords} pageSize={PAGE_SIZE} onPageChange={setPage} />
       </div>
     </div>
   );

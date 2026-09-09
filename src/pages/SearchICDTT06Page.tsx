@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Search, Check, AlertTriangle } from 'lucide-react';
 import { db, ICDTT06Record, ICDTT06Filters } from '../db/database';
 import { cn } from '../components/Layout';
+import { Pagination } from '../components/Pagination';
 
 export function SearchICDTT06Page() {
   const [query, setQuery] = useState('');
@@ -16,12 +17,23 @@ export function SearchICDTT06Page() {
     maleOnly: false
   });
 
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const PAGE_SIZE = 100;
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, filters]);
+
   useEffect(() => {
     const search = async () => {
       setIsSearching(true);
       try {
-        const res = await db.searchICDTT06(query, filters);
-        setResults(res);
+        const res = await db.searchICDTT06Paged(query, filters, page, PAGE_SIZE);
+        setResults(res.records);
+        setTotalPages(res.totalPages);
+        setTotalRecords(res.total);
       } catch (error) {
         console.error("Search error:", error);
       } finally {
@@ -31,7 +43,7 @@ export function SearchICDTT06Page() {
 
     const debounceTimer = setTimeout(search, 300);
     return () => clearTimeout(debounceTimer);
-  }, [query, filters]);
+  }, [query, filters, page]);
 
   const toggleFilter = (key: keyof ICDTT06Filters) => {
     setFilters(prev => ({ ...prev, [key]: !prev[key] }));
@@ -203,9 +215,7 @@ export function SearchICDTT06Page() {
           </div>
         )}
       </div>
-      <div className="p-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex justify-between items-center flex-shrink-0">
-        <span>Hiển thị tối đa 200 kết quả</span>
-      </div>
+      <Pagination page={page} totalPages={totalPages} total={totalRecords} pageSize={PAGE_SIZE} onPageChange={setPage} />
     </div>
   );
 }
