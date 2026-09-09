@@ -12,6 +12,7 @@ export function SearchTT01Page() {
   const [totalPages, setTotalPages] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [resolvedNames, setResolvedNames] = useState<Record<string, string>>({});
 
   const PAGE_SIZE = 100;
 
@@ -40,6 +41,31 @@ export function SearchTT01Page() {
     setActiveTab(tab);
     setQuery(''); // Reset query when switching tabs
     setExpandedId(null);
+  };
+
+  const handleExpand = async (rec: ICDTT01Record) => {
+    if (expandedId === rec.id) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(rec.id!);
+    
+    const codes = rec.code.split(';').map(c => c.trim()).filter(Boolean);
+    const missingCodes = codes.filter(c => !(c in resolvedNames));
+    
+    if (missingCodes.length > 0) {
+      const newResolved = { ...resolvedNames };
+      for (const code of missingCodes) {
+         try {
+            const icd = await db.icdTT06.where('code').equalsIgnoreCase(code).first()
+                        || await db.icds.where('code').equalsIgnoreCase(code).first();
+            newResolved[code] = icd?.nameVN || '';
+         } catch(e) {
+            newResolved[code] = '';
+         }
+      }
+      setResolvedNames(prev => ({ ...prev, ...newResolved }));
+    }
   };
 
   return (
@@ -101,7 +127,7 @@ export function SearchTT01Page() {
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <button
-                          onClick={() => setExpandedId(isExpanded ? null : rec.id!)}
+                          onClick={() => handleExpand(rec)}
                           className="px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors"
                         >
                           {isExpanded ? 'Thu gọn' : 'Xem mã'}
@@ -129,10 +155,18 @@ export function SearchTT01Page() {
                       <div className="border-t border-slate-100 bg-slate-50/50">
                         <div className="p-3 space-y-1.5 max-h-80 overflow-y-auto">
                           {codes.map((c, idx) => (
-                            <div key={idx} className="flex items-center gap-3 p-2.5 bg-white rounded-lg border border-slate-100">
-                              <span className="font-mono text-sm font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded flex-shrink-0">
+                            <div key={idx} className="flex items-start gap-3 p-2.5 bg-white rounded-lg border border-slate-100">
+                              <span className="font-mono text-sm font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded flex-shrink-0 mt-0.5">
                                 {c}
                               </span>
+                              {resolvedNames[c] ? (
+                                <span className="text-sm text-slate-700 pt-0.5">{resolvedNames[c]}</span>
+                              ) : (
+                                <span className="text-sm text-slate-400 italic flex items-center gap-1 pt-0.5">
+                                  <AlertCircle className="w-3.5 h-3.5" />
+                                  Không tìm thấy trong CSDL TT06
+                                </span>
+                              )}
                             </div>
                           ))}
                         </div>
