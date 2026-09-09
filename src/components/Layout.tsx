@@ -14,51 +14,51 @@ interface LayoutProps {
 }
 
 export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    setIsAdmin(localStorage.getItem('isAdmin') === 'true');
+    const adminStatus = localStorage.getItem('isAdmin');
+    if (adminStatus === 'true') {
+      setIsAdmin(true);
+    }
   }, []);
 
   const handleLoginToggle = () => {
     if (isAdmin) {
-        if (window.confirm('Bß║ín c├│ muß╗æn ─æ─âng xuß║Ñt khß╗Åi chß║┐ ─æß╗Ö Quß║ún trß╗ï?')) {
-            localStorage.removeItem('isAdmin');
-            setIsAdmin(false);
-            if (['import', 'history', 'rule_management', 'backup'].includes(currentTab)) {
-                setCurrentTab('search');
-            }
-        }
+      if (window.confirm('Bạn có chắc muốn đăng xuất khỏi chế độ Quản trị?')) {
+        localStorage.removeItem('isAdmin');
+        setIsAdmin(false);
+      }
     } else {
-        const user = window.prompt('T├¬n ─æ─âng nhß║¡p (d├ánh cho Quß║ún trß╗ï vi├¬n):');
-        if (user === 'anhkanIT') {
-            const pass = window.prompt('Mß║¡t khß║⌐u:');
-            if (pass === '020609') {
-                localStorage.setItem('isAdmin', 'true');
-                setIsAdmin(true);
-                alert('Khß╗ƒi ─æß╗Öng chß║┐ ─æß╗Ö Quß║ún trß╗ï th├ánh c├┤ng! ─É├ú mß╗ƒ kh├│a Menu Hß╗ç thß╗æng.');
-            } else {
-                alert('Sai mß║¡t khß║⌐u!');
-            }
-        } else if (user) {
-            alert('T├ái khoß║ún kh├┤ng tß╗ôn tß║íi!');
+      const user = window.prompt('Tên đăng nhập (dành cho Quản trị viên):');
+      if (user === 'anhkanIT') {
+        const pass = window.prompt('Mật khẩu:');
+        if (pass === '020609') {
+          localStorage.setItem('isAdmin', 'true');
+          setIsAdmin(true);
+          alert('Khởi động chế độ Quản trị thành công! Đã mở khóa Menu Hệ thống.');
+        } else {
+          alert('Sai mật khẩu!');
         }
+      } else if (user) {
+        alert('Tài khoản không tồn tại!');
+      }
     }
   };
 
   const navItems = [
-    { id: 'tt06', label: 'Tra cß╗⌐u ICD TT06', icon: FileText },
-    { id: 'tt25', label: 'Tra c\u1ee9u ICD TT25', icon: FileText },
-    { id: 'yhct', label: 'Tra cß╗⌐u YHCT', icon: Stethoscope },
-    { id: 'facility', label: 'Tra cß╗⌐u CSKCB', icon: Building2 },
-    { id: 'dvkt', label: 'Tra cß╗⌐u DVKT Tß╗òng hß╗úp', icon: Activity },
-    { id: 'thuoc', label: 'Tra cß╗⌐u Thuß╗æc', icon: Pill },
-    { id: 'import', label: 'Cß║¡p nhß║¡t Q─É/Data', icon: Upload },
-    { id: 'history', label: 'Lß╗ïch sß╗¡', icon: History },
-    { id: 'cls_engine', label: 'Gß╗úi ├╜ CLS (AI)', icon: Syringe },
-    { id: 'rule_management', label: 'C├ái ─æß║╖t Chß╗æng chß╗ë ─æß╗ïnh', icon: Settings },
-    { id: 'backup', label: 'Sao l╞░u & ─Éß╗ông bß╗Ö', icon: Database },
+    { id: 'tt06', label: 'Tra cứu ICD TT06', icon: FileText },
+    { id: 'tt25', label: 'Tra cứu ICD TT25', icon: FileText },
+    { id: 'yhct', label: 'Tra cứu YHCT', icon: Stethoscope },
+    { id: 'facility', label: 'Tra cứu CSKCB', icon: Building2 },
+    { id: 'dvkt', label: 'Tra cứu DVKT Tổng hợp', icon: Activity },
+    { id: 'thuoc', label: 'Tra cứu Thuốc', icon: Pill },
+    { id: 'import', label: 'Cập nhật QĐ/Data', icon: Upload },
+    { id: 'history', label: 'Lịch sử', icon: History },
+    { id: 'cls_engine', label: 'Gợi ý CLS (AI)', icon: Syringe },
+    { id: 'rule_management', label: 'Cài đặt Chống chỉ định', icon: Settings },
+    { id: 'backup', label: 'Sao lưu & Đồng bộ', icon: Database },
   ];
 
   return (
@@ -87,7 +87,7 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
             </button>
           </div>
           <p className="text-[10px] mt-3 font-bold text-slate-400 tracking-wider text-left leading-tight">
-            NGUYß╗äN ─ÉO├ÇN MINH ├üNH - IT Y Tß║╛ - CoppyRight
+            NGUYỄN ĐOÀN MINH ANH - IT Y TẾ - CoppyRight
           </p>
         </div>
         
@@ -117,11 +117,11 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
         </nav>
         
         <div className="p-4 border-t border-slate-200 text-xs text-slate-500">
-          <p>Phi├¬n bß║ún: 1.0.0</p>
+          <p>Phiên bản: 1.0.0</p>
           <div className="flex justify-between items-center mt-1">
-             <p>Dß╗» liß╗çu: Chuß║⌐n BYT</p>
+             <p>Dữ liệu: Chuẩn BYT</p>
              <button onClick={handleLoginToggle} className={`font-medium ${isAdmin ? 'text-rose-600' : 'text-slate-400 hover:text-indigo-600'}`}>
-                {isAdmin ? '─É─âng xuß║Ñt' : '≡ƒöÆ ─É─âng nhß║¡p'}
+                {isAdmin ? 'Đăng xuất' : '🔒 Đăng nhập'}
              </button>
           </div>
         </div>
@@ -181,5 +181,3 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
     </div>
   );
 }
-
-
