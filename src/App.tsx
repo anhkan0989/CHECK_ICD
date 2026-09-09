@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { SearchTT25Page } from './pages/SearchTT25Page';
+import { SearchTT01Page } from './pages/SearchTT01Page';
 import { SearchICDTT06Page } from './pages/SearchICDTT06Page';
 import { SearchYHCTPage } from './pages/SearchYHCTPage';
 import { SearchFacilityPage } from './pages/SearchFacilityPage';
@@ -58,6 +59,7 @@ export default function App() {
         </div>
       )}
       {currentTab === 'tt06' && <SearchICDTT06Page />}
+      {currentTab === 'tt01' && <SearchTT01Page />}
       {currentTab === 'tt25' && <SearchTT25Page />}
       {currentTab === 'yhct' && <SearchYHCTPage />}
       {currentTab === 'facility' && <SearchFacilityPage />}

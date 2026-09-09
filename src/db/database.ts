@@ -39,6 +39,15 @@ export interface ICDTT06Record {
   searchString: string;
 }
 
+export interface ICDTT01Record {
+  id?: number;
+  code: string;
+  nameVN: string;
+  type: 'PL1' | 'PL2';
+  version: string;
+  searchString: string;
+}
+
 export interface ICDTT06Filters {
   notMainDisease: boolean;
   notRecommendedMain: boolean;
@@ -166,6 +175,7 @@ export class ICDDatabase extends Dexie {
   dvktTongHop!: Table<DVKTTongHopRecord, number>;
   thuocQuocGia!: Table<ThuocQuocGiaRecord, number>;
   tt25records!: Table<TT25Record, number>;
+  icdTT01!: Table<ICDTT01Record, number>;
 
   constructor() {
     super('ICDDatabase');
@@ -189,6 +199,9 @@ export class ICDDatabase extends Dexie {
     });
     this.version(8).stores({
       tt25records: '++id, name'
+    });
+    this.version(9).stores({
+      icdTT01: '++id, code, type, searchString, version'
     });
   }
 
@@ -219,7 +232,8 @@ export class ICDDatabase extends Dexie {
         limitFetch('facilities').then(async (d) => { await this.facilities.clear(); if(d.length) await this.facilities.bulkAdd(d); }),
         limitFetch('dvkt_tong_hop').then(async (d) => { await this.dvktTongHop.clear(); if(d.length) await this.dvktTongHop.bulkAdd(d); }),
         limitFetch('thuoc_quoc_gia').then(async (d) => { await this.thuocQuocGia.clear(); if(d.length) await this.thuocQuocGia.bulkAdd(d); }),
-        limitFetch('icd_tt06').then(async (d) => { await this.icdTT06.clear(); if(d.length) await this.icdTT06.bulkAdd(d); })
+        limitFetch('icd_tt06').then(async (d) => { await this.icdTT06.clear(); if(d.length) await this.icdTT06.bulkAdd(d); }),
+        limitFetch('icd_tt01').then(async (d) => { await this.icdTT01.clear(); if(d.length) await this.icdTT01.bulkAdd(d); })
       ];
       
       await Promise.all(promises);
@@ -784,9 +798,10 @@ export class ICDDatabase extends Dexie {
     if (!historyRecord) return;
     const v = historyRecord.version;
 
-    await this.transaction('rw', [this.history, this.icds, this.icdTT06, this.yhcts, this.facilities, this.cls, this.icdClsMap, this.icdConflict, this.dvktTongHop, this.thuocQuocGia], async () => {
+    await this.transaction('rw', [this.history, this.icds, this.icdTT06, this.yhcts, this.facilities, this.cls, this.icdClsMap, this.icdConflict, this.dvktTongHop, this.thuocQuocGia, this.icdTT01], async () => {
       await this.icds.where('version').equals(v).delete();
       await this.icdTT06.where('version').equals(v).delete();
+      await this.icdTT01.where('version').equals(v).delete();
       await this.yhcts.filter(r => r.version === v).delete();
       await this.facilities.filter(r => r.version === v).delete();
       await this.cls.filter(r => r.version === v).delete();
@@ -808,14 +823,17 @@ export class ICDDatabase extends Dexie {
         await supabase.from('icd_conflict').delete().eq('version', v);
         await supabase.from('dvkt_tong_hop').delete().eq('version', v);
         await supabase.from('thuoc_quoc_gia').delete().eq('version', v);
+        await supabase.from('icd_tt06').delete().eq('version', v);
+        await supabase.from('icd_tt01').delete().eq('version', v);
     } catch (e) {
         console.error('Lỗi khi xóa trên Supabase:', e);
     }
   }
   async deleteAllData() {
-    await this.transaction('rw', [this.history, this.icds, this.icdTT06, this.yhcts, this.facilities, this.cls, this.icdClsMap, this.icdConflict, this.dvktTongHop, this.thuocQuocGia], async () => {
+    await this.transaction('rw', [this.history, this.icds, this.icdTT06, this.yhcts, this.facilities, this.cls, this.icdClsMap, this.icdConflict, this.dvktTongHop, this.thuocQuocGia, this.icdTT01], async () => {
       await this.icds.clear();
       await this.icdTT06.clear();
+      await this.icdTT01.clear();
       await this.yhcts.clear();
       await this.facilities.clear();
       await this.cls.clear();
@@ -836,6 +854,8 @@ export class ICDDatabase extends Dexie {
         await supabase.from('icd_conflict').delete().neq('icd1Code', 'xxxxxxxxxx');
         await supabase.from('dvkt_tong_hop').delete().neq('maTuongDuong', 'xxxxxxxxxx');
         await supabase.from('thuoc_quoc_gia').delete().neq('tenThuoc', 'xxxxxxxxxx');
+        await supabase.from('icd_tt06').delete().neq('code', 'xxxxxxxxxx');
+        await supabase.from('icd_tt01').delete().neq('code', 'xxxxxxxxxx');
     } catch (e) {
         console.error('Lỗi khi xóa trên Supabase:', e);
     }
@@ -870,6 +890,75 @@ export class ICDDatabase extends Dexie {
 
   async clearTT25Records() {
     await this.tt25records.clear();
+  }
+
+  async searchICDTT01(query: string, type: 'PL1' | 'PL2', limit: number = 200): Promise<ICDTT01Record[]> {
+    const normalizedQuery = query ? normalizeForSearch(query) : '';
+    const terms = normalizedQuery.split(' ').filter(t => t.length > 0);
+
+    return await this.icdTT01
+      .filter(record => {
+        if (record.type !== type) return false;
+        if (terms.length === 0) return true;
+        
+        let matchTerms = true;
+        matchTerms = terms.every(term => record.searchString.includes(term));
+        return matchTerms;
+      })
+      .limit(limit)
+      .toArray();
+  }
+
+  async searchICDTT01Paged(query: string, type: 'PL1' | 'PL2', page: number, pageSize: number) {
+    const all = await this.searchICDTT01(query, type, 1000000);
+    const total = all.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    const safeP = Math.min(Math.max(page, 1), totalPages);
+    const records = all.slice((safeP - 1) * pageSize, safeP * pageSize);
+    return { records, total, totalPages, page: safeP };
+  }
+
+  async importICDTT01(data: Partial<ICDTT01Record>[], type: 'PL1' | 'PL2', version: string, importer: string, fileName: string) {
+    let added = 0;
+    let updated = 0;
+
+    await this.transaction('rw', this.icdTT01, this.history, async () => {
+      for (const item of data) {
+        if (!item.code || !item.nameVN) continue;
+
+        const existing = await this.icdTT01.where({ code: item.code, type: type }).first();
+        const searchString = normalizeForSearch(`${item.code} ${item.nameVN}`);
+        
+        const record = { 
+          ...item,
+          type,
+          version, 
+          searchString,
+        } as ICDTT01Record;
+
+        if (existing && existing.id) {
+          await this.icdTT01.update(existing.id, record);
+          updated++;
+        } else {
+          await this.icdTT01.add(record);
+          added++;
+        }
+      }
+
+      await this.history.add({
+        version,
+        importDate: new Date(),
+        importer,
+        recordsAdded: added,
+        recordsUpdated: updated,
+        fileName
+      });
+    });
+
+    const allRecords = await this.icdTT01.where('version').equals(version).toArray();
+    this.pushToSupabaseBatched('icd_tt01', allRecords, version);
+    
+    return { added, updated };
   }
 }
 

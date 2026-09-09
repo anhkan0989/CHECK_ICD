@@ -404,6 +404,22 @@ export function ImportPage() {
              resolvedNames: JSON.stringify(resolved)
           });
         }
+      } else if (importType === 'tt01_pl1' || importType === 'tt01_pl2') {
+        mappedData = data.map((originalRow: any) => {
+          const row: any = {};
+          for (const key in originalRow) {
+            if (Object.prototype.hasOwnProperty.call(originalRow, key)) {
+              const cleanKey = key.trim().toLowerCase().normalize('NFC').replace(/\s+/g, '');
+              row[cleanKey] = originalRow[key];
+            }
+          }
+          const rawCode = row['mãbệnh'] || row['mã'] || row['code'] || '';
+          const rawName = row['tênbệnh'] || row['tên'] || row['name'] || '';
+          return {
+            code: String(rawCode).trim(),
+            nameVN: String(rawName).trim()
+          };
+        }).filter((item: any) => item.code && item.nameVN);
       }
 
       if (mappedData.length === 0) {
@@ -431,6 +447,10 @@ export function ImportPage() {
         await db.clearTT25Records();
         await db.addTT25Records(mappedData);
         res = { added: mappedData.length, updated: 0 };
+      } else if (importType === 'tt01_pl1') {
+        res = await db.importICDTT01(mappedData, 'PL1', version, 'User', file.name);
+      } else if (importType === 'tt01_pl2') {
+        res = await db.importICDTT01(mappedData, 'PL2', version, 'User', file.name);
       } else {
         res = await db.importData(mappedData, version, 'User', file.name);
       }
@@ -531,6 +551,8 @@ export function ImportPage() {
               <option value="a2">Phụ lục A2 (QĐ 4469/BYT)</option>
               <option value="icd_tt06">Danh mục ICD TT06/2026/BYT</option>
               <option value="tt25">Danh sách bệnh dài ngày (TT25)</option>
+              <option value="tt01_pl1">Danh mục TT01 BYT - Phụ lục 1 (Chuyên sâu)</option>
+              <option value="tt01_pl2">Danh mục TT01 BYT - Phụ lục 2 (Cơ bản)</option>
               <option value="yhct">Danh mục ICD Y Học Cổ Truyền</option>
               <option value="facility">Danh sách CSKCB</option>
               <option value="dvkt_tong_hop">Danh mục DVKT Tổng hợp (Giá, Phân loại...)</option>

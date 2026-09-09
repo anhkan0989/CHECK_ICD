@@ -48,6 +48,7 @@ export function Layout({ children, currentTab, setCurrentTab }: LayoutProps) {
   };
 
   const navItems = [
+    { id: 'tt01', label: 'Tra cứu ICD TT01 (Chuyển tuyến)', icon: FileText },
     { id: 'tt06', label: 'Tra cứu ICD TT06', icon: FileText },
     { id: 'tt25', label: 'Tra cứu ICD TT25', icon: FileText },
     { id: 'yhct', label: 'Tra cứu YHCT', icon: Stethoscope },
