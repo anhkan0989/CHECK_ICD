@@ -233,7 +233,8 @@ export class ICDDatabase extends Dexie {
         limitFetch('dvkt_tong_hop').then(async (d) => { await this.dvktTongHop.clear(); if(d.length) await this.dvktTongHop.bulkAdd(d); }),
         limitFetch('thuoc_quoc_gia').then(async (d) => { await this.thuocQuocGia.clear(); if(d.length) await this.thuocQuocGia.bulkAdd(d); }),
         limitFetch('icd_tt06').then(async (d) => { await this.icdTT06.clear(); if(d.length) await this.icdTT06.bulkAdd(d); }),
-        limitFetch('icd_tt01').then(async (d) => { await this.icdTT01.clear(); if(d.length) await this.icdTT01.bulkAdd(d); })
+        limitFetch('icd_tt01').then(async (d) => { await this.icdTT01.clear(); if(d.length) await this.icdTT01.bulkAdd(d); }),
+        limitFetch('tt25records').then(async (d) => { await this.tt25records.clear(); if(d.length) await this.tt25records.bulkAdd(d); })
       ];
       
       await Promise.all(promises);
@@ -253,6 +254,8 @@ export class ICDDatabase extends Dexie {
           if (tableName === 'thuoc_quoc_gia') primaryKey = 'tenThuoc';
           if (tableName === 'icd_cls_map') primaryKey = 'icdCode';
           if (tableName === 'icd_conflict') primaryKey = 'icd1Code';
+          if (tableName === 'tt25records') primaryKey = 'name';
+          // TT01 primary key will be handled based on code, assuming unique row by code string
           
           const allKeys = Array.from(new Set(data.map(r => r[primaryKey]).filter(Boolean)));
           const DELETE_CHUNK = 1000;
@@ -435,7 +438,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.icds.where('version').equals(version).toArray();
-    this.pushToSupabaseBatched('icds', allRecords, version);
+    await this.pushToSupabaseBatched('icds', allRecords, version);
 
     return { added, updated };
   }
@@ -515,7 +518,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.icdTT06.where('version').equals(version).toArray();
-    this.pushToSupabaseBatched('icd_tt06', allRecords, version);
+    await this.pushToSupabaseBatched('icd_tt06', allRecords, version);
     
     return { added, updated };
   }
@@ -592,7 +595,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.yhcts.filter(r => r.version === version).toArray();
-    this.pushToSupabaseBatched('yhcts', allRecords, version);
+    await this.pushToSupabaseBatched('yhcts', allRecords, version);
 
     return { added, updated };
   }
@@ -618,7 +621,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.facilities.filter(r => r.version === version).toArray();
-    this.pushToSupabaseBatched('facilities', allRecords, version);
+    await this.pushToSupabaseBatched('facilities', allRecords, version);
 
     return { added, updated };
   }
@@ -657,7 +660,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.cls.filter(r => r.version === version).toArray();
-    this.pushToSupabaseBatched('cls', allRecords, version);
+    await this.pushToSupabaseBatched('cls', allRecords, version);
 
     return { added, updated };
   }
@@ -683,7 +686,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.dvktTongHop.filter(r => r.version === version).toArray();
-    this.pushToSupabaseBatched('dvkt_tong_hop', allRecords, version);
+    await this.pushToSupabaseBatched('dvkt_tong_hop', allRecords, version);
 
     return { added, updated };
   }
@@ -708,7 +711,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.icdClsMap.filter(r => r.version === version).toArray();
-    this.pushToSupabaseBatched('icd_cls_map', allRecords, version);
+    await this.pushToSupabaseBatched('icd_cls_map', allRecords, version);
 
     return { added, updated };
   }
@@ -737,7 +740,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.icdConflict.filter(r => r.version === version).toArray();
-    this.pushToSupabaseBatched('icd_conflict', allRecords, version);
+    await this.pushToSupabaseBatched('icd_conflict', allRecords, version);
 
     return { added, updated };
   }
@@ -788,7 +791,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.thuocQuocGia.filter(r => r.version === version).toArray();
-    this.pushToSupabaseBatched('thuoc_quoc_gia', allRecords, version);
+    await this.pushToSupabaseBatched('thuoc_quoc_gia', allRecords, version);
 
     return { added, updated };
   }
@@ -825,6 +828,7 @@ export class ICDDatabase extends Dexie {
         await supabase.from('thuoc_quoc_gia').delete().eq('version', v);
         await supabase.from('icd_tt06').delete().eq('version', v);
         await supabase.from('icd_tt01').delete().eq('version', v);
+        await supabase.from('tt25records').delete().neq('name', 'xxxxxxxxxx');
     } catch (e) {
         console.error('Lỗi khi xóa trên Supabase:', e);
     }
@@ -856,6 +860,7 @@ export class ICDDatabase extends Dexie {
         await supabase.from('thuoc_quoc_gia').delete().neq('tenThuoc', 'xxxxxxxxxx');
         await supabase.from('icd_tt06').delete().neq('code', 'xxxxxxxxxx');
         await supabase.from('icd_tt01').delete().neq('code', 'xxxxxxxxxx');
+        await supabase.from('tt25records').delete().neq('name', 'xxxxxxxxxx');
     } catch (e) {
         console.error('Lỗi khi xóa trên Supabase:', e);
     }
@@ -882,6 +887,9 @@ export class ICDDatabase extends Dexie {
 
   async addTT25Records(records: TT25Record[]) {
     await this.tt25records.bulkAdd(records);
+    // Sync to supabase
+    const allRecords = await this.tt25records.toArray();
+    await this.pushToSupabaseBatched('tt25records', allRecords, 'TT25-latest');
   }
 
   async deleteTT25Record(id: number) {
@@ -956,7 +964,7 @@ export class ICDDatabase extends Dexie {
     });
 
     const allRecords = await this.icdTT01.where('version').equals(version).toArray();
-    this.pushToSupabaseBatched('icd_tt01', allRecords, version);
+    await this.pushToSupabaseBatched('icd_tt01', allRecords, version);
     
     return { added, updated };
   }
