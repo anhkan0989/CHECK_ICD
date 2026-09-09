@@ -2,6 +2,7 @@
   "name": "check-icdx",
   "framework": "vite",
   "buildCommand": "vite build",
+  "installCommand": "npm install --ignore-scripts",
   "outputDirectory": "dist",
   "headers": [
     {
