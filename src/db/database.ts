@@ -187,6 +187,9 @@ export class ICDDatabase extends Dexie {
     this.version(7).stores({
       icdTT06: '++id, code, searchString, version'
     });
+    this.version(8).stores({
+      tt25records: '++id, name'
+    });
   }
 
   async syncFromSupabase() {
@@ -782,10 +785,6 @@ export class ICDDatabase extends Dexie {
     } catch (e) {
         console.error('Lß╗ùi khi x├│a tr├¬n Supabase:', e);
     }
-  }
-
-  async updateRecord(id: number, data: Partial<ICDRecord>) {
-    await this.icds.update(id, data);
   }
 
   async searchTT25Paged(query: string, page: number, pageSize: number) {
