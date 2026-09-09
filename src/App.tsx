@@ -19,10 +19,10 @@ export default function App() {
 
   useEffect(() => {
     const checkUpdates = async () => {
-       // K├¡ch hoß║ít ─æß╗ông bß╗Ö ngß║ºm khi mß╗ƒ app
+       // Kích hoạt đồng bộ ngầm khi mở app
        db.syncFromSupabase().then(success => {
           if (success) {
-             setUpdateMessage('─É├ú ─æß╗ông bß╗Ö dß╗» liß╗çu mß╗¢i nhß║Ñt tß╗½ hß╗ç thß╗æng!');
+             setUpdateMessage('Đã đồng bộ dữ liệu mới nhất từ hệ thống!');
              setTimeout(() => setUpdateMessage(''), 3000);
           }
        });
@@ -32,15 +32,15 @@ export default function App() {
           // @ts-ignore
           const updateData = await window.electronAPI.checkForUpdateFile();
           if (updateData && Array.isArray(updateData)) {
-            setUpdateMessage('─Éang nß║íp file update ICD...');
+            setUpdateMessage('Đang nạp file update ICD...');
             try {
                await db.importData(updateData, 'vUpdateAuto', 'SystemAuto', 'icd_update_file');
                // @ts-ignore
                await window.electronAPI.deleteUpdateFile();
-               setUpdateMessage('─É├ú nß║íp file update th├ánh c├┤ng!');
+               setUpdateMessage('Đã nạp file update thành công!');
                setTimeout(() => setUpdateMessage(''), 3000);
             } catch (err) {
-               setUpdateMessage('Lß╗ùi nß║íp file update!');
+               setUpdateMessage('Lỗi nạp file update!');
                console.error(err);
                setTimeout(() => setUpdateMessage(''), 3000);
             }

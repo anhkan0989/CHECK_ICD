@@ -122,7 +122,7 @@ export interface DVKTTongHopRecord {
   donGia: number;
   ghiChu: string;
   hangDichVu: string;
-  hieuLuc: string; // 'C├│' hoß║╖c 'Kh├┤ng'
+  hieuLuc: string; // 'Có' hoặc 'Không'
   ngayCapNhat: string;
   searchString: string;
   version: string;
@@ -194,7 +194,7 @@ export class ICDDatabase extends Dexie {
 
   async syncFromSupabase() {
     try {
-      console.log('Tß║úi dß╗» liß╗çu tß╗½ Supabase...');
+      console.log('Tải dữ liệu từ Supabase...');
       const limitFetch = async (table: string) => {
         let allData: any[] = [];
         let from = 0;
@@ -223,17 +223,17 @@ export class ICDDatabase extends Dexie {
       ];
       
       await Promise.all(promises);
-      console.log('Ho├án th├ánh lß║Ñy dß╗» liß╗çu Supabase v├áo Local!');
+      console.log('Hoàn thành lấy dữ liệu Supabase vào Local!');
       return true;
     } catch (err) {
-      console.error('Lß╗ùi lß║Ñy dß╗» liß╗çu Supabase:', err);
+      console.error('Lỗi lấy dữ liệu Supabase:', err);
       return false;
     }
   }
 
   private async pushToSupabaseBatched(tableName: string, data: any[], version: string) {
       try {
-          console.log(`Bß║»t ─æß║ºu ─æß║⌐y ${data.length} d├▓ng l├¬n Supabase bß║úng ${tableName}...`);
+          console.log(`Bắt đầu đẩy ${data.length} dòng lên Supabase bảng ${tableName}...`);
           let primaryKey = 'code';
           if (tableName === 'dvkt_tong_hop') primaryKey = 'maTuongDuong';
           if (tableName === 'thuoc_quoc_gia') primaryKey = 'tenThuoc';
@@ -258,11 +258,11 @@ export class ICDDatabase extends Dexie {
               });
               
               const { error } = await supabase.from(tableName).insert(chunk);
-              if (error) console.error(`[Supabase] Lß╗ùi insert bß║úng ${tableName}:`, error);
+              if (error) console.error(`[Supabase] Lỗi insert bảng ${tableName}:`, error);
           }
-          console.log(`─Éß║⌐y xong ${tableName}!`);
+          console.log(`Đẩy xong ${tableName}!`);
       } catch (e) {
-          console.error('[Supabase] Lß╗ùi batch insert:', e);
+          console.error('[Supabase] Lỗi batch insert:', e);
       }
   }
 
@@ -418,7 +418,7 @@ export class ICDDatabase extends Dexie {
           const hasWarning = (val?: string) => {
             if (!val) return false;
             const s = val.trim().toLowerCase();
-            return s.length > 0 && s !== 'kh├┤ng' && s !== '0' && s !== 'false';
+            return s.length > 0 && s !== 'không' && s !== '0' && s !== 'false';
           };
           if (filters.notMainDisease && !hasWarning(record.notMainDisease)) return false;
           if (filters.notRecommendedMain && !hasWarning(record.notRecommendedMain)) return false;
@@ -745,7 +745,7 @@ export class ICDDatabase extends Dexie {
     });
 
     try {
-        console.log(`X├│a dß╗» liß╗çu version ${v} tr├¬n Supabase...`);
+        console.log(`Xóa dữ liệu version ${v} trên Supabase...`);
         await supabase.from('icds').delete().eq('version', v);
         await supabase.from('yhcts').delete().eq('version', v);
         await supabase.from('facilities').delete().eq('version', v);
@@ -755,7 +755,7 @@ export class ICDDatabase extends Dexie {
         await supabase.from('dvkt_tong_hop').delete().eq('version', v);
         await supabase.from('thuoc_quoc_gia').delete().eq('version', v);
     } catch (e) {
-        console.error('Lß╗ùi khi x├│a tr├¬n Supabase:', e);
+        console.error('Lỗi khi xóa trên Supabase:', e);
     }
   }
   async deleteAllData() {
@@ -773,7 +773,7 @@ export class ICDDatabase extends Dexie {
     });
 
     try {
-        console.log(`X├│a TO├ÇN Bß╗ÿ dß╗» liß╗çu tr├¬n Supabase...`);
+        console.log(`Xóa TOÀN BỘ dữ liệu trên Supabase...`);
         await supabase.from('icds').delete().neq('code', 'xxxxxxxxxx');
         await supabase.from('yhcts').delete().neq('code', 'xxxxxxxxxx');
         await supabase.from('facilities').delete().neq('code', 'xxxxxxxxxx');
@@ -783,7 +783,7 @@ export class ICDDatabase extends Dexie {
         await supabase.from('dvkt_tong_hop').delete().neq('maTuongDuong', 'xxxxxxxxxx');
         await supabase.from('thuoc_quoc_gia').delete().neq('tenThuoc', 'xxxxxxxxxx');
     } catch (e) {
-        console.error('Lß╗ùi khi x├│a tr├¬n Supabase:', e);
+        console.error('Lỗi khi xóa trên Supabase:', e);
     }
   }
 
