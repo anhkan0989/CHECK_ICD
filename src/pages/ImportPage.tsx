@@ -358,6 +358,52 @@ export function ImportPage() {
              ghiChu2: String(ghiChu2).trim()
           };
         }).filter((item: any) => item.tenThuoc);
+      } else if (importType === 'tt25') {
+        mappedData = [];
+        for (const originalRow of data) {
+          const row: any = {};
+          for (const key in originalRow) {
+            if (Object.prototype.hasOwnProperty.call(originalRow, key)) {
+              const cleanKey = key.trim().toLowerCase().normalize('NFC').replace(/\s+/g, '');
+              row[cleanKey] = originalRow[key];
+            }
+          }
+          const rawCodes = row['mãbệnhicd10'] || row['mabenhicd10'] || row['mãbệnh_icd10'] || row['mabenh_icd10'] || row['mãicd10'] || row['maicd10'] || row['mãicd'] || row['mã'] || row['code'] || '';
+          const codesStr = String(rawCodes).trim();
+          if (!codesStr) continue;
+
+          const codeList = codesStr.split(';').map(c => c.trim()).filter(Boolean);
+          if (codeList.length === 0) continue;
+
+          let groupName = `Nhóm bệnh ${codeList[0]}`;
+          const firstCode = codeList[0];
+          try {
+             const icd = await db.icdTT06.where('code').equalsIgnoreCase(firstCode).first() 
+                         || await db.icds.where('code').equalsIgnoreCase(firstCode).first();
+             if (icd && icd.nameVN) {
+                groupName = icd.nameVN;
+             }
+          } catch (e) {
+             console.warn("Lỗi tra cứu tên TT06 cho mã", firstCode, e);
+          }
+
+          const resolved: { code: string; nameVN: string }[] = [];
+          for (const code of codeList) {
+             try {
+                const icd = await db.icdTT06.where('code').equalsIgnoreCase(code).first() 
+                            || await db.icds.where('code').equalsIgnoreCase(code).first();
+                resolved.push({ code, nameVN: icd?.nameVN || '' });
+             } catch(e) {
+                resolved.push({ code, nameVN: '' });
+             }
+          }
+
+          mappedData.push({
+             name: groupName,
+             codes: codesStr,
+             resolvedNames: JSON.stringify(resolved)
+          });
+        }
       }
 
       if (mappedData.length === 0) {
@@ -381,6 +427,10 @@ export function ImportPage() {
         res = await db.importDVKT(mappedData, version, 'User', file.name);
       } else if (importType === 'thuoc_quoc_gia') {
         res = await db.importThuocQuocGia(mappedData, version, 'User', file.name);
+      } else if (importType === 'tt25') {
+        await db.clearTT25Records();
+        await db.addTT25Records(mappedData);
+        res = { added: mappedData.length, updated: 0 };
       } else {
         res = await db.importData(mappedData, version, 'User', file.name);
       }
@@ -427,6 +477,13 @@ export function ImportPage() {
             ["", "Metformin", "Metformin XR 500", "Viên", "500mg", "E11.9", "Giảm nguy cơ", "Suy thận", "", "1 viên/ngày", ""]
         ];
         filename = "Mau_Danh_Muc_Thuoc.xlsx";
+    } else if (importType === 'tt25') {
+        wsData = [
+            ["STT", "mabenh_icd10"],
+            ["1", "A06.1;A06.2;A06.3;A06.4"],
+            ["2", "A15;A16;A17;A18;A19"]
+        ];
+        filename = "Mau_Danh_Muc_TT25.xlsx";
     } else {
         wsData = [
             ["Mã", "Tên bệnh", "Hiệu lực"],
@@ -473,6 +530,7 @@ export function ImportPage() {
               <option value="icd">Danh mục ICD Tiêu chuẩn</option>
               <option value="a2">Phụ lục A2 (QĐ 4469/BYT)</option>
               <option value="icd_tt06">Danh mục ICD TT06/2026/BYT</option>
+              <option value="tt25">Danh sách bệnh dài ngày (TT25)</option>
               <option value="yhct">Danh mục ICD Y Học Cổ Truyền</option>
               <option value="facility">Danh sách CSKCB</option>
               <option value="dvkt_tong_hop">Danh mục DVKT Tổng hợp (Giá, Phân loại...)</option>

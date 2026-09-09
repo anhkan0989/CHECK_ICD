@@ -87,16 +87,12 @@ function ImportTT25({ onImported }: { onImported: () => void }) {
 
   return (
     <div className="flex items-center gap-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl">
-      <label className={cn(
-        "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors",
-        importing ? "bg-slate-200 text-slate-400" : "bg-indigo-600 text-white hover:bg-indigo-700"
-      )}>
-        <Upload className="w-4 h-4" />
-        {importing ? 'Đang import...' : 'Import file TT25 (.txt/.tsv)'}
-        <input type="file" accept=".txt,.tsv,.csv" onChange={handleFile} disabled={importing} className="hidden" />
-      </label>
-      {msg && <p className="text-sm text-slate-700">{msg}</p>}
-      <p className="text-xs text-slate-500 ml-auto">Cột 1: Tên nhóm bệnh, Cột 2: Các mã ICD (cách nhau dấu ;)</p>
+      <div className="flex-1">
+        <p className="text-sm font-medium text-slate-800">Cập nhật danh mục TT25</p>
+        <p className="text-xs text-slate-500 mt-1">
+          Vui lòng sử dụng tính năng <strong>Cập nhật CSDL</strong> (Menu bên trái) ➔ Chọn loại dữ liệu <strong>Danh sách bệnh dài ngày (TT25)</strong> để import file Excel.
+        </p>
+      </div>
     </div>
   );
 }
